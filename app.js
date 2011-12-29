@@ -33,17 +33,15 @@ db.createConnection('default', 'localhost', 27017, {
     app.use(express.errorHandler());
   });
 
-  app.get('/comment/post', function(req, res) {
-      res.render('commentform.ejs', { title: "Create a new comment" });
+  app.get('/comment/post', auth.authenticated, function(req, res) {
+      res.render('commentform.jade', { title: "Create a new comment" });
   });
 
-  app.get('login', function (req, res) {
-      res.render('loginform.ejs');
+  app.get('/login', function (req, res) {
+      res.render('loginform.jade', { services: auth.services, title: 'Log in'});
   });
 
-  app.post('login', function (req, res) {
-      res.render('loginform.ejs');
-  });
+  app.post('/login', auth.authenticate);
 
   app.post('/comment', function(req, res) {
 	commentModel.save(req.body, function(result) {
@@ -51,19 +49,18 @@ db.createConnection('default', 'localhost', 27017, {
 	});
     });
 
-    app.get('/comment', function(req, res) {
-	commentModel.index({}, function(comments) {
+  app.get('/comment', function(req, res) {
+    commentModel.index({}, function(comments) {
 	    res.json(comments);
-	});
     });
+  });
 
-    app.get('/comment/:id', function(req, res) {
-	commentModel.retrieve(req.params.id, function(comment) {
+  app.get('/comment/:id', function(req, res) {
+    commentModel.retrieve(req.params.id, function(comment) {
 	    res.json(comment);
-	});
-    });
-
-    app.listen(3000);
-    console.log('Express server listening on port %d in %s mode',
+      });
+  });
+  app.listen(3000);
+  console.log('Express server listening on port %d in %s mode',
 		app.address().port, app.settings.env);
 });

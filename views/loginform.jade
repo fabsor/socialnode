@@ -1,0 +1,8 @@
+section
+  h1 Log in
+  form(method='post', action='/login')
+    label(for='provider') Log in using:
+    select(name='provider')
+      each service, name in services
+        option(value=name) #{service.label}
+    input(type='submit', value='Log in')

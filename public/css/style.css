@@ -10,3 +10,13 @@ a {
 form * {
   display: block;
 }
+
+.comment {
+  background: #eee;
+  padding: 5px;
+  margin: 10px;
+}
+
+.comment .name {
+  margin: 2px 0;
+}

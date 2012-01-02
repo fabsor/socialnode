@@ -2,147 +2,149 @@
  * Module dependencies.
  */
 var fs = require('fs');
-var comment = require('./lib/comment');
-var auth = require('./lib/auth');
 var express = require('express');
 
-// Get our configuration for the database. Once that is done, we can
-// get to work on getting a connection.
-fs.readFile("config/db.json", function(error, data) {
-  if (error) {
-    throw Error('Could not read json file');
-  }
-  var db_settings = JSON.parse(data);
-  var db = require(db_settings.driver);
-  // Create a connection to the database.
-  db.createConnection('default', db_settings, configureApp);
-});
-
 /**
- * Determines if we should send JSON back.
+ * This is our main class. It mainly encapsulates things and keeps
+ * track of events that fire.
  */
-var JSONConditional = {}
-
-JSONConditional.accept = function (req) {
-  return req.accepts('application/json');
-}
-
-JSONConditional.send = function (res, data) {
-  res.json(data);
-}
-
-/**
- * Determines if we should send HTML back.
- */
-var HTMLConditional = {}
-
-HTMLConditional.accept = function (req) {
-  return req.accepts('html') && req.accepts('text/html');
-}
-
-HTMLConditional.send = function (res, data, options) {
-  // Do we have a suggested template to use?
-  if (typeof options == "object"  && options.template) {
-    template = options.template;
+var App = function() {
+  this.listeners = {};
+  this.modules = {};
+  this.bootstrapSteps = {
+    "config/db.json": bootstrapDB,   
+    "config/modules.json": loadModules 
+  };
+  var app = this;
+  function bootstrapDB(error, data) {
+    if (error) {
+      throw Error('Could not read json file');
+    }
+    var db_settings = JSON.parse(data);
+    var db = require(db_settings.driver);
+    // Create a connection to the database.
+    db.createConnection('default', db_settings, function(con) {    
+      app.con = con;
+      app.bootstrapStepDone("config/db.json");
+    });
   }
-  else if (typeof options == "string") {
-    template = options;
-  }
-  if (template) {
-    res.render(template, data);
-  }
-  else {
-    // Otherwise, just send the payload
-    res.send(data);
-  }
-}
 
-/**
- * Middleware definition for conditional responses.
- */
-function conditionalResponse() {
-  // A number of conditions that can apply for requests
-  // that can be returned in different ways.
-  var sendConditionals = [JSONConditional, HTMLConditional];
+  function loadModules(error, data) {
+    if (error) {
+      throw Error('Could not read modules json file.');
+    }
+    modules = JSON.parse(data);
+    for (var name in modules) {
+      if (modules.hasOwnProperty(name)) {
+        // Add the module to the list of objects.
+        app.modules[name] = require(modules[name].path);
+      }
+    }
+    app.bootstrapStepDone("config/modules.json");
+  }
 
   /**
-   * Return different things depending on the current configuration
-   * and the request headers.
+   * Configure our express app.
    */
-  function conditionalSend(req, res, data, options) {
-    for (var i in sendConditionals) {
-        if (sendConditionals[i].accept(req)) {
-            sendConditionals[i].send(res, data, options);
-          break;
+  this.configureApp = function (con) {
+    this.server = express.createServer();
+    var server = this.server;
+    // Configuration
+    server.configure(function () {
+      server.set('views', __dirname + '/views');
+      server.set('view engine', 'jade');
+      server.use(express.bodyParser());
+      server.use(express.cookieParser());
+      server.use(express.session({ secret: "Some secret thing" }));
+      server.use(express.methodOverride());
+      server.use(server.router);
+      server.use(express.static(__dirname + '/public'));
+      // Set a default title.
+      server.set('view options', { layout: true, title: 'Social node' });
+    });
+    server.configure('development', function () {
+    server.use(express.errorHandler({
+      dumpExceptions : true,
+      showStack : true
+      }));
+    });
+    server.configure('production', function() {
+      server.use(express.errorHandler());
+    });
+    server.listen(3000);
+    console.log('Server listening on port %d in %s mode',
+		server.address().port, server.settings.env);
+    // Let all modules do their thing.
+    for (var name in this.modules) {
+      if (typeof this.modules[name].init == "function") {
+        this.modules[name].init(this);
+      }
+      else if (typeof this.modules[name].init == "array") {
+        for (var i in this.modules[name].init) {
+          this.modules[name].init[i](this);
         }
+      }
     }
+  };
 }
 
-  return function conditionalResponse(req, res, next) {
-    res.conditionalSend = conditionalSend;
-    next();
+/**
+ * Initiate the bootstrap. This is executed in parallel.
+ */
+App.prototype.bootstrap = function () {
+  for (var name in this.bootstrapSteps) {
+    fs.readFile(name, this.bootstrapSteps[name]);
   }
 }
 
 /**
- * Configure our express app.
+ * Add a step to the bootstrap process. This only works in the initial
+ * phase of the application, if you don't force a bootstrap process to
+ * run again.
  */
-function configureApp(con) {
-  var app = module.exports = express.createServer(),
-  commentModel = new comment.CommentModel(con.db);
-  // Configuration
-  app.configure(function () {
-    app.set('views', __dirname + '/views');
-    app.set('view engine', 'jade');
-    app.use(express.bodyParser());
-    app.use(express.cookieParser());
-    app.use(express.session({ secret: "Some secret thing" }));
-    app.use(express.methodOverride());
-    app.use(conditionalResponse());
-    app.use(app.router);
-    app.use(express.static(__dirname + '/public'));
-    // Set a default title.
-    app.set('view options', { layout: true, title: 'Social node' });
-  });
-  app.configure('development', function () {
-    app.use(express.errorHandler({
-      dumpExceptions : true,
-      showStack : true
-    }));
-  });
-  app.configure('production', function() {
-    app.use(express.errorHandler());
-  });
-
-  app.get('/comment/post', auth.authenticated, function(req, res) {
-      res.render('commentform.jade', { title: "Create a new comment" });
-  });
-
-  app.get('/login', function (req, res) {
-      res.render('loginform.jade', { services: auth.services, title: 'Log in'});
-  });
-
-  app.post('/login', auth.authenticate);
-
-  app.post('/comment', function(req, res) {
-      commentModel.save(req.body, function(result) {
-	    res.redirect('back');
-	});
-    });
-
-  app.get('/comment', function(req, res) {
-    // Set a suggested template that we can return if we want HTML.
-    commentModel.index({}, function(data) {
-        console.log(data);
-        res.conditionalSend(req, res, { comments: data }, 'comments.jade');
-    });
-  });
-  app.get('/comment/:id', function(req, res) {
-    commentModel.retrieve(req.params.id, function(comment) {
-      res.conditionalSend(req, res, data, 'comment.jade')
-    });
-  });
-  app.listen(3000);
-  console.log('Express server listening on port %d in %s mode',
-		app.address().port, app.settings.env);
+App.prototype.addBootstrapStep = function (file, fn) {
+  this.bootstrapSteps[file] = fn;
 }
+
+/**
+ * Notify the application that another step is done.
+ */
+App.prototype.bootstrapStepDone = function(step) {
+  delete this.bootstrapSteps[step];
+  // We are ready to start the application if all the configuratin has been loaded.
+  if (Object.keys(this.bootstrapSteps).length == 0) {
+    this.configureApp();
+  }
+}
+
+/**
+ * Get a module object.
+ */
+App.prototype.getModule = function (module) {
+  return this.modules[name];
+}
+
+/**
+ * Get a database connection.
+ */
+App.prototype.getConnection = function () {
+  console.log(this.con);
+  return this.con;
+}
+
+/**
+ * Get our server.
+ */
+App.prototype.getServer = function () {
+  return this.server;
+}
+
+App.prototype.addEventListener = function (event, fn) {
+  if (typeof this.events[event] != "object") {
+    this.events[event] = [];
+  }
+  this.events["event"].append(fn);
+}
+
+var app = new App();
+app.bootstrap();

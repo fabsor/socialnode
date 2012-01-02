@@ -1,0 +1,5 @@
+{
+  "comment": { "path" : "./lib/comment" },
+  "auth": { "path" : "./lib/auth" },
+  "conditional": {"path" : "./lib/conditional"}
+}

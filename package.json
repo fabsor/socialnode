@@ -4,7 +4,8 @@
   , "private": true
   , "dependencies": {
       "express": "2.5.2"
-    , "node_oauth": ">= 0.07"
+    , "oauth": ">= 0.07"
     , "jade": ">= 0.0.1"
+    , "validator": ">= 0.3.9"
   }
 }

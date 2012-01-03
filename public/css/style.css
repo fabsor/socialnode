@@ -1,5 +1,6 @@
 body {
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background: #eee;
 }
 
 a {
@@ -19,4 +20,17 @@ form * {
 
 .comment .name {
   margin: 2px 0;
+}
+
+.content {
+  background: #fff;
+  width: 75%;
+  margin: 0 auto;
+  padding: 0 5px;
+  border: 2px solid #333;
+}
+
+.content section {
+  margin: 10px;
+  padding: 10px;
 }

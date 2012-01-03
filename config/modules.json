@@ -1,5 +1,6 @@
 {
   "comment": { "path" : "./lib/comment" },
   "auth": { "path" : "./lib/auth" },
-  "conditional": {"path" : "./lib/conditional"}
+  "conditional": {"path" : "./lib/conditional"},
+  "resource": {"path" : "./lib/resource.js"}
 }

@@ -1,0 +1,12 @@
+section#createresource
+  h1#title Create resource
+  form#resource(method="post")
+    label(for="label") Label
+    input(type="text", name="label", value=resource.label)
+    #{errors.label}
+    label(for="name") Machine name
+    input(type="text", name="name", value=resource.name)
+    #{errors.name}
+    label(for="description") Description
+    textarea(̈́name="description", resource.description)
+    input(type="submit", value="Save")

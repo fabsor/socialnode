@@ -1,0 +1,7 @@
+section#resources
+  h1#title Resources
+  a(href="resources/create") Create new resource
+  ul#resources
+  each resource, name in resources
+    li.resource
+      a(href="resource/#{name}")= resource.label

@@ -2,8 +2,24 @@
 html
   head
     title= title
+    link(type='text/css', rel='stylesheet', media='screen', href='/bootstrap/bootstrap.css')
     link(type='text/css', rel='stylesheet', media='screen', href='/css/style.css')
+    script(src="/js/jquery_ui/jquery-1.7.1.js")
+    script(src="/js/endpoints.js")
 body
-.content!= body
+.topbar
+  .fill
+    .container
+      span.brand Resource Builder
+      ul.nav
+        li
+          a(href="/admin/resources") Resources
+.container
+  if tabs
+    ul.tabs
+      each tab in tabs
+        li
+          a(href=tab.url)!= tab.title
+  .content!= body
 
 

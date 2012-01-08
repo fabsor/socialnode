@@ -1,0 +1,6 @@
+[submodule "public/bootstrap"]
+	path = public/bootstrap
+	url = https://github.com/twitter/bootstrap.git
+[submodule "public/js/jquery_ui"]
+	path = public/js/jquery_ui
+	url = https://github.com/jquery/jquery-ui.git

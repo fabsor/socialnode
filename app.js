@@ -3,18 +3,28 @@
  */
 var fs = require('fs');
 var express = require('express');
+var EventEmitter = require('events').EventEmitter;
+
+
+var loadConfig = function (param) {
+  fs.readFile(param.file, param.finished);
+}
 
 /**
  * This is our main class. It mainly encapsulates things and keeps
  * track of events that fire.
  */
 var App = function() {
+  EventEmitter.call(this);
   this.listeners = {};
   this.modules = {};
-  this.bootstrapSteps = {
-    "config/db.json": bootstrapDB,   
-    "config/modules.json": loadModules 
-  };
+  this.objects = {};
+  this.step = 0;
+  this.plugins = {};
+  this.bootstrapSteps = [
+    { fn: loadConfig, parameters: { file: "config/db.json", finished: bootstrapDB }},
+    { fn: loadConfig, parameters: { file: "config/modules.json", finished: loadModules }}
+  ];
   var app = this;
   function bootstrapDB(error, data) {
     if (error) {
@@ -23,9 +33,9 @@ var App = function() {
     var db_settings = JSON.parse(data);
     var db = require(db_settings.driver);
     // Create a connection to the database.
-    db.createConnection('default', db_settings, function(con) {    
+    db.createConnection('default', db_settings, function(con) {
       app.con = con;
-      app.bootstrapStepDone("config/db.json");
+      app.bootstrapNext();
     });
   }
 
@@ -38,9 +48,15 @@ var App = function() {
       if (modules.hasOwnProperty(name)) {
         // Add the module to the list of objects.
         app.modules[name] = require(modules[name].path);
+        // Add a namespace where the module can register things.
+        app.objects[name] = {};
+        // Let the new module do things upon inclusion.
+        if (typeof app.modules[name].boot == "function") {
+          app.modules[name].boot(app, app.modules[name]);
+        }
       }
     }
-    app.bootstrapStepDone("config/modules.json");
+    app.bootstrapNext();
   }
 
   /**
@@ -48,6 +64,7 @@ var App = function() {
    */
   this.configureApp = function (con) {
     this.server = express.createServer();
+    var app = this;
     var server = this.server;
     // Configuration
     server.configure(function () {
@@ -58,9 +75,10 @@ var App = function() {
       server.use(express.session({ secret: "Some secret thing" }));
       server.use(express.methodOverride());
       server.use(server.router);
+      app.emit('configureServer', server);
       server.use(express.static(__dirname + '/public'));
       // Set a default title.
-      server.set('view options', { layout: true, title: 'Social node' });
+      server.set('view options', { layout: true, title: 'Social node', tabs: {} });
     });
     server.configure('development', function () {
     server.use(express.errorHandler({
@@ -75,6 +93,7 @@ var App = function() {
     console.log('Server listening on port %d in %s mode',
 		server.address().port, server.settings.env);
     // Let all modules do their thing.
+    // @todo this should be an event instead.
     for (var name in this.modules) {
       if (typeof this.modules[name].init == "function") {
         this.modules[name].init(this);
@@ -88,13 +107,13 @@ var App = function() {
   };
 }
 
+App.prototype = Object.create(EventEmitter.prototype);
+
 /**
  * Initiate the bootstrap. This is executed in parallel.
  */
 App.prototype.bootstrap = function () {
-  for (var name in this.bootstrapSteps) {
-    fs.readFile(name, this.bootstrapSteps[name]);
-  }
+  this.bootstrapNext();
 }
 
 /**
@@ -102,33 +121,62 @@ App.prototype.bootstrap = function () {
  * phase of the application, if you don't force a bootstrap process to
  * run again.
  */
-App.prototype.addBootstrapStep = function (file, fn) {
-  this.bootstrapSteps[file] = fn;
+App.prototype.addBootstrapStep = function (fn, parameters) {
+  this.bootstrapSteps.push({ fn: fn, parameters: parameters });
 }
 
 /**
  * Notify the application that another step is done.
  */
-App.prototype.bootstrapStepDone = function(step) {
-  delete this.bootstrapSteps[step];
-  // We are ready to start the application if all the configuratin has been loaded.
-  if (Object.keys(this.bootstrapSteps).length == 0) {
+App.prototype.bootstrapNext = function() {
+  var nextStep = this.bootstrapSteps.shift();
+  if (typeof nextStep == "undefined") {
     this.configureApp();
+  }
+  else {
+    nextStep.fn(nextStep.parameters);
   }
 }
 
 /**
- * Get a module object.
+ * Add a plugin to the application.
+ */
+App.prototype.addPlugin = function (type, name, definition) {
+  this.plugins[type] = this.plugins[type] || {};
+  this.plugins[type][name] = definition;
+}
+
+/**
+ * Get a specific plugin.
+ * @param string type the plugin type.
+ * @param string name the plugin name.
+ */
+App.prototype.getPlugin = function (type, name) {
+  return this.plugins[type][name];
+}
+
+/**
+ * Get all plugins.
+ * @param strin type (optional) Return plugins with this type.
+ */
+App.prototype.getPlugins = function (type) {
+  if (type) {
+    return this.plugins[type];
+  }
+  return this.plugins;
+}
+
+/**
+ * Get a module.
  */
 App.prototype.getModule = function (module) {
-  return this.modules[name];
+  return this.modules[module];
 }
 
 /**
  * Get a database connection.
  */
 App.prototype.getConnection = function () {
-  console.log(this.con);
   return this.con;
 }
 
@@ -139,11 +187,18 @@ App.prototype.getServer = function () {
   return this.server;
 }
 
-App.prototype.addEventListener = function (event, fn) {
-  if (typeof this.events[event] != "object") {
-    this.events[event] = [];
-  }
-  this.events["event"].append(fn);
+/**
+ * Add an object that should be accessible in the application.
+ */
+App.prototype.set = function (module, name, object) {
+  this.objects[module][name] = object;
+}
+
+/**
+ * Get an object that has been registered in the applicaiton.
+ */
+App.prototype.get = function (module, name) {
+  return this.objects[module][name];
 }
 
 var app = new App();

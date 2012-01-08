@@ -2,5 +2,7 @@
   "comment": { "path" : "./lib/comment" },
   "auth": { "path" : "./lib/auth" },
   "conditional": {"path" : "./lib/conditional"},
-  "resource": {"path" : "./lib/resource.js"}
+  "resource": {"path" : "./lib/resource"},
+  "fields": {"path" : "./lib/fields"},
+  "endpoints": {"path": "./lib/endpoints"}
 }

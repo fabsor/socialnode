@@ -1,12 +1,19 @@
 section#createresource
   h1#title Create resource
   form#resource(method="post")
-    label(for="label") Label
-    input(type="text", name="label", value=resource.label)
-    #{errors.label}
-    label(for="name") Machine name
-    input(type="text", name="name", value=resource.name)
-    #{errors.name}
-    label(for="description") Description
-    textarea(̈́name="description", resource.description)
-    input(type="submit", value="Save")
+    .clearfix
+      label(for="label") Label
+      .input
+        input(type="text", name="label", value=resource.label)
+        span.help-inline= errors.label
+    .clearfix
+      label(for="name") Machine name
+      .input
+        input(type="text", name="name", value=resource.name)
+        span.help-inline= errors.name
+    .clearfix
+      label(for="description") Description
+      .input
+        textarea(̈́name="description", resource.description)
+    .actions
+      input.btn.primary(type="submit", value="Save")

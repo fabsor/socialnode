@@ -1,0 +1,14 @@
+section#resourcecontent
+  table.zebra-striped.bordered-table
+    tr
+      th
+      th.id
+      th.Operations
+    each resource in resources
+      tr
+        td
+          input(type="checkbox", name="resources[]", value=resource.id)
+        td= resource._id
+        td
+          a(href=resource.editLink) Edit
+          a(href=resource.deleteLink) Delete

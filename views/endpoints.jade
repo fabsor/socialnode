@@ -1,0 +1,16 @@
+section#endpoints
+  h1.title Endpoints
+  table.zebra-striped.bordered-table
+      tr
+        th.name Name
+        th.path Path
+        th.method Method
+        th.op Operations
+      each endpoint, name in endpoints
+        tr
+          td.name= endpoint.label
+          td.path= endpoint.path
+          td.method= endpoint.method
+          td.op
+            a(href=endpoint.editUrl) Edit
+            a(href=endpoint.deleteUrl) Delete

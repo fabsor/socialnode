@@ -1,0 +1,7 @@
+section#resource
+h1.title Create #{label}
+form(method="post")#resourceform
+  each field in fields
+    != partial(field.template, { field: field.field, value: field.value, error: field.error })
+  .actions
+    input.btn.primary(type="submit", value="Save")

@@ -1,0 +1,22 @@
+section#overview
+  h1#fields Fields
+  form(method="post")#fields-form
+    table.zebra-striped.bordered-table
+      tr
+        th.order Order
+        th.name Name
+        th.op Operations
+      each field, name in fields
+        tr
+          td.order
+            input(type='text', size='2', name='field[' + name + '][weight]', value=field.weight)
+          td.name!= name
+          td.op
+            a(href=field.editUrl) Edit
+            a(href=field.deleteUrl) Delete
+    input.btn.primary(type="submit", value="Save order")
+  form(action=newFieldPath, method="post")
+    select(name="fieldtype")
+      each fieldOption in fieldOptions
+        option(value=fieldOption.name)!= fieldOption.label
+    input.btn.primary(type="submit", value="Add field")

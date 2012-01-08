@@ -1,0 +1,20 @@
+section.fieldform
+  h1.title Add Field
+  form#fieldform(method="post")
+    fieldset.global
+      legend.title Global settings
+      div(class=errors.label ? "clearfix error" : "clearfix")
+        label(for="label") Label
+        .input
+          input(type="textfield", name="label", value=field.label)
+          span.help-inline!= errors.label
+      div(class=errors.name ? "clearfix error" : "clearfix")
+        label(for="name") Machine name
+        .input
+          input(type="textfield", name="name", value=field.name, disabled=errors.name ? 'disabled' : false)
+          span.help-inline!= errors.label
+    fieldset.settings
+      legend.title Field settings
+      != partial(fieldForm, {field: field})
+    .actions
+      input.btn.primary(type="submit", value="Save field")

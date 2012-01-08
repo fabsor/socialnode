@@ -1,0 +1,9 @@
+div(class="clearfix")
+  label(for=field.name)= field.label
+  .input
+    if field.element == "textfield"
+      input(name=field.name, type="text", value=value)
+    else
+      textarea(name=field.name)= value
+    span.help-inline= field.error
+

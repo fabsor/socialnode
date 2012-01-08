@@ -1,0 +1,39 @@
+section#endpointform
+  h1.title Add Endpoint
+  form(method="post")
+    fieldset
+      legend General settings
+        .clearfix
+          label(for="label") Label
+          .input
+            input(type="text", name="label")
+        .clearfix
+          label(for="name") Name
+          .input
+            input(type="text", name="name")
+        .clearfix
+          label(for="path") Path
+          .input
+            input(type="text", name="path")
+    fieldset
+      legend Methods
+        table
+          tr
+            th.label Method
+            th.operations Operations
+          each method, name in endpoint.methods
+            tr
+              td.label= method.label
+              td.operations
+                a(href=method.editUrl) Edit
+                a(href=method.deleteUrl) Delete
+        .clearfix
+          label(for="method") Add method
+        .input
+          select#method(name="method")
+            each methodPlugin, name in methodPlugins
+              option(value=name)= methodPlugin.label
+              input#addmethod.btn(type="submit", value="Add Method")
+    div#method-form
+    .actions
+      input.btn.primary(type="submit", value="Save endpoint")

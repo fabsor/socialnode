@@ -1,0 +1,26 @@
+div(class=errors.maxlength ? "clearfix error" : "clearfix")
+  label(for="maxlength") Max length
+  .input
+    input(type="text", name="maxlength", value=field.maxlength)
+    span.help-inline!= errors.maxlength
+    span.help-block Enter 0 for no limit.
+div(class=errors.minlength ? "clearfix error" : "clearfix")
+  label(for="minlength") Min length
+  .input
+    input(type="text", name="minlength", value=field.minlength)
+    span.help-inline!= errors.minlength
+    span.help-block Enter 0 for no limit.
+div(class=errors.element ? "clearfix error" : "clearfix")
+  label(for="element") Element type
+  .input
+    ul.inputs-list
+      li
+        label
+          input(type="radio", name="element", value="textfield", checked=field.element == "textfield" ? "checked" : false)
+          span Text field
+      li
+        label
+          input(type="radio", name="element", value="textarea", checked=field.element == "textarea" ? "checked" : false)
+          span Text area
+     span.help-block Select how this text field will be represented.
+

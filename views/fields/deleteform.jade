@@ -1,0 +1,7 @@
+section#deletefield
+  h1.title Delete field
+  p Are you sure you want to delete this field?
+  form(method="post")
+    .actions
+      input.btn.primary(type="submit", name="delete", value="Delete field")
+      a.cancel.btn(href=returnLink) Cancel

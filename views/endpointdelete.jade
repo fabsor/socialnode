@@ -1,0 +1,8 @@
+section#deletecontent
+  h1.title Delete content
+  p Are you sure you want to delete this?
+  form(method="post")
+    .actions
+      input.btn.primary(type="submit", name="delete", value="Delete content")
+      a.cancel.btn(href=returnLink) Cancel
+

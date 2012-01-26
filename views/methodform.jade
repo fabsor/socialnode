@@ -1,16 +1,12 @@
-form(method="post")
+form#addmethodform(method="post")
+  input(type="hidden", name="plugin", value=plugin)
   if methodForm
     != partial(methodForm, {method: method})
   .clearfix
     label(for="response") Response type
     .input
-      select(name="response")
+      select#response(name="response")
         each responsePlugin, name in responsePlugins
           option(value=name)= responsePlugin.label
-  .clearfix
-    label(for="access") Access
-      select(name="access")
-        each accessPlugin, name in accessPlugins
-          option(value=name)= accessPlugin.label
   .actions
-    input.button.primary(type="submit", value="Add method")
+    input.button.primary#addmethodsubmit(type="submit", value="Add method")

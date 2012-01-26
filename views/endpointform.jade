@@ -16,12 +16,13 @@ section#endpointform
           .input
             input(type="text", name="path")
     fieldset
+      div#methods
       legend Methods
-        table
+        table#methodtable.bordered-table
           tr
-            th.label Method
-            th.operations Operations
-          each method, name in endpoint.methods
+            th Method
+            th Operations
+          each method, name in methods
             tr
               td.label= method.label
               td.operations
@@ -30,10 +31,10 @@ section#endpointform
         .clearfix
           label(for="method") Add method
         .input
-          select#method(name="method")
+          select(name="method")
             each methodPlugin, name in methodPlugins
               option(value=name)= methodPlugin.label
-              input#addmethod.btn(type="submit", value="Add Method")
+              input#addmethod.btn(type="submit", name="addmethod", value="Add Method")
     div#method-form
     .actions
       input.btn.primary(type="submit", value="Save endpoint")
